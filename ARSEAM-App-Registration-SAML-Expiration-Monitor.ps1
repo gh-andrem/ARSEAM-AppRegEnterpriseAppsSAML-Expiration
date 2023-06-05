@@ -34,7 +34,7 @@
   v0.5 - Add version requirement of Az modules, adjust script to be compatible with updated Az modules
   v0.4 - Add "Source" key/value pair to both hash tables to make it easier to determine the location of the expiration object (App Registration or SAML SSO)
   v0.3 - Adjust script and add integration of SAML SSO certificate expiration
-  v0.2 - Fork and modify repo below to implement authentication via Managed Identity by andre.mueller on 10/15/2021
+  v0.2 - Fork and modify repo below to implement authentication via Managed Identity on 10/15/2021
   v0.1 - Credit goes to https://github.com/Cj-Scott/Get-AppRegistrationExpiration
 #>
 
