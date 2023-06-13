@@ -15,8 +15,8 @@
   The following PowerShell modules and versions need to be installed in the Azure Automation account prior to deployment.
   Az.Accounts v2.8.0, runtime 5.1 (should already be installed)
   Az.Resources v6.0.0, runtime 5.1 (should already be installed)
-  Microsoft.Graph.Authentication v1.27.0, runtime 5.1 (install manually)
-  Microsoft.Graph.Applications v1.27.0, runtime 5.1 (install manually)
+  Microsoft.Graph.Authentication v1.28.0, runtime 5.1 (install manually)
+  Microsoft.Graph.Applications v1.28.0, runtime 5.1 (install manually)
   Newer versions of these modules might not be supported. The below script might fail.
 
  .PARAMETER
@@ -115,7 +115,7 @@ Write-output 'Gathering necessary information...'
 # Get all App Registrations where PasswordCredentials value is not empty.
 $applications = Get-AzADApplication | Where-Object {$_.PasswordCredentials}
 # Get all Enterprise Apps where Tags and KeyCredentials values are not empty (managed identities are excluded).
-$SAMLApplications = Get-MgServicePrincipal | Where-Object {$_.Tags -and $_.KeyCredentials} | Select ObjectId, AppId, DisplayName, KeyCredentials
+$SAMLApplications = Get-MgServicePrincipal -All | Where-Object {$_.Tags -and $_.KeyCredentials} | Select ObjectId, AppId, DisplayName, KeyCredentials
 $timeStamp = Get-Date -format o
 
 # Create array with client secret/certificate data of all App Registrations
