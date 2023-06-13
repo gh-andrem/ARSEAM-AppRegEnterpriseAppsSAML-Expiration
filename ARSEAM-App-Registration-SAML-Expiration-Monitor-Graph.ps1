@@ -1,15 +1,15 @@
-﻿<# 
+<# 
  .SYNOPSIS
   Get client secret and certificate data from App Registrations and SAML signing certificates
 
  .DESCRIPTION
   This script retrieves the client secret and certificate end dates (including other relevant data) from App Registrations and SAML signing certificates (Enterprise Applications)
-  in an Azure tenant.
+  in an Azure AD tenant.
   The created hash table is then sent to the Log Analytics workspace that is linked to the Runbook's Automation account. Logs can then be scheduled to send a reminder to
-  an alert group via Azure Monitor or Azure Sentinel, e.g. an email can be sent to the service desk 60 days before a certificate expires.
+  an alert group via Azure Monitor or Microsoft Sentinel, e.g. an email can be sent to the service desk 60 days before a certificate expires.
   This script is also useful in cleaning up obsolete App Registrations and SAML SSO connections that are no longer being used.
 
-  The data is retrieved via Az and Azure cmdlets via Managed Identity which makes this script easy to maintain.
+  The data is retrieved via PowerShell cmdlets using a Managed Identity.
 
  .REQUIREMENTS
   The following PowerShell modules and versions need to be installed in the Azure Automation account prior to deployment.
@@ -36,7 +36,7 @@
   v0.5 - Add version requirement of Az modules, adjust script to be compatible with updated Az modules
   v0.4 - Add "Source" key/value pair to both hash tables to make it easier to determine the location of the expiration object (App Registration or SAML SSO)
   v0.3 - Adjust script and add integration of SAML SSO certificate expiration
-  v0.2 - Fork and modify repo below to implement authentication via Managed Identity on 10/15/2021
+  v0.2 - Fork and modify repo below to implement authentication via Managed Identity by andre.mueller on 10/15/2021
   v0.1 - Credit goes to https://github.com/Cj-Scott/Get-AppRegistrationExpiration
 #>
 
@@ -115,7 +115,7 @@ Write-output 'Gathering necessary information...'
 # Get all App Registrations where PasswordCredentials value is not empty.
 $applications = Get-AzADApplication | Where-Object {$_.PasswordCredentials}
 # Get all Enterprise Apps where Tags and KeyCredentials values are not empty (managed identities are excluded).
-$SAMLApplications = Get-MgServicePrincipal -All | Where-Object {$_.Tags -and $_.KeyCredentials} | Select ObjectId, AppId, DisplayName, KeyCredentials
+$SAMLApplications = Get-MgServicePrincipal -All | Where-Object {$_.Tags -and $_.KeyCredentials} | Select Id, AppId, DisplayName, KeyCredentials
 $timeStamp = Get-Date -format o
 
 # Create array with client secret/certificate data of all App Registrations
@@ -137,12 +137,12 @@ $appWithCredentials += $SAMLApplications | Sort-Object -Property DisplayName | %
     $SAMLApplication = $_
     $SAMLApplication | Select-Object `
     -Property @{Name='DisplayName'; Expression={$_.DisplayName}}, `
-    @{Name='ObjectId'; Expression={$_.ObjectId}}, `
+    @{Name='ObjectId'; Expression={$_.Id}}, `
     @{Name='ApplicationId'; Expression={$_.AppId}}, `
     @{Name='KeyId'; Expression={$_.KeyCredentials[0].KeyId}}, `
     @{Name='Source'; Expression={"SAML SSO Certificate"}}, `
-    @{Name='StartDate'; Expression={$_.KeyCredentials[0].StartDate -as [datetime]}},`
-    @{Name='EndDate'; Expression={$_.KeyCredentials[0].EndDate -as [datetime]}}
+    @{Name='StartDate'; Expression={$_.KeyCredentials[0].StartDateTime -as [datetime]}},`
+    @{Name='EndDate'; Expression={$_.KeyCredentials[0].EndDateTime -as [datetime]}}
   }
 
 Write-output 'Validating expiration data...'
