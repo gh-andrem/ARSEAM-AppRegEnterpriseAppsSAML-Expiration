@@ -32,6 +32,7 @@
   Results to Log Analytics and then to Azure Monitor or Azure Sentinel
 
  .NOTES
+  v0.7 - Adjust line 117 to exclude CWAP_AuthSecret
   v0.6 - Adjust script to use Graph API PowerShell
   v0.5 - Add version requirement of Az modules, adjust script to be compatible with updated Az modules
   v0.4 - Add "Source" key/value pair to both hash tables to make it easier to determine the location of the expiration object (App Registration or SAML SSO)
@@ -112,8 +113,8 @@ Try {
 
 Write-output 'Gathering necessary information...'
 
-# Get all App Registrations where PasswordCredentials value is not empty.
-$applications = Get-AzADApplication | Where-Object {$_.PasswordCredentials}
+# Get all App Registrations where PasswordCredentials value is not empty and displayName of secret is not CWAP_AuthSecret (= Private connecter/App Proxy)
+$applications = Get-AzADApplication | Where-Object {$_.PasswordCredentials -and $_.PasswordCredentials.displayName -ne "CWAP_AuthSecret"}
 # Get all Enterprise Apps where Tags and KeyCredentials values are not empty (managed identities are excluded).
 $SAMLApplications = Get-MgServicePrincipal -All | Where-Object {$_.Tags -and $_.KeyCredentials} | Select Id, AppId, DisplayName, KeyCredentials
 $timeStamp = Get-Date -format o
